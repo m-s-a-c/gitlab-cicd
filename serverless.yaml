@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  lambda-python3.9
+
+  Collects legal documents for TrackTrack.ru
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+    Environment:
+      Variables:
+        ES_ENDPOINT: $ES_ENDPOINT
+        ES_USER: $ES_USER
+        ES_PASS: $ES_PASS
+        LAW_API_ENDPOINT: $LAW_API_ENDPOINT
+        SENTRY_SDK_LINK: $SENTRY_SDK_LINK
+        SCRAPERS_API_ENDPOINT: $SCRAPERS_API_ENDPOINT
+        LAMBDA_REGION_NAME: $LAMBDA_REGION_NAME
+
+Resources:
+  regGovRu:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: scrapers-regGovRu
+      CodeUri: regulation_gov_ru/
+      Handler: lambda_function.handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Description: Collects documents from regulation.gov.ru
+      MemorySize: 128
+      Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+      Layers:
+        - !Ref ScrapersCommonCode
+
+  pravoGovRu:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: scrapers-pravoGovRu
+      CodeUri: pravo_gov_ru/
+      Handler: lambda_function.handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Description: Collects documents from pravo.gov.ru
+      MemorySize: 128
+      Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+      Layers:
+        - !Ref ScrapersCommonCode
+
+  cbrRu:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: scrapers-cbrRu
+      CodeUri: cbr_ru/
+      Handler: lambda_function.handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Description: Collects documents from cbr.ru
+      MemorySize: 128
+      Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+      Layers:
+        - !Ref ScrapersCommonCode
+
+  dumaGovRu:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: scrapers-dumaGovRu
+      CodeUri: duma_gov_ru/
+      Handler: lambda_function.handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Description: Collects documents from sozd.duma.gov.ru
+      MemorySize: 128
+      Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+      Layers:
+        - !Ref ScrapersCommonCode
+
+    dumaMosRu:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        FunctionName: scrapers-dumaMosRu
+        CodeUri: duma_mos_ru/
+        Handler: lambda_function.handler
+        Runtime: python3.9
+        Architectures:
+          - x86_64
+        Description: Collects documents from duma.mos.ru/ru/38/adopted_documents
+        MemorySize: 128
+        Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+        Layers:
+          - !Ref ScrapersCommonCode
+
+    docsEaeunionOrg:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        FunctionName: scrapers-docsEaeunionOrg
+        CodeUri: docs_eaeunion_org/
+        Handler: lambda_function.handler
+        Runtime: python3.9
+        Architectures:
+          - x86_64
+        Description: Collects documents from duma.mos.ru/ru/38/adopted_documents
+        MemorySize: 128
+        Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+        Layers:
+          - !Ref ScrapersCommonCode
+
+    fasGovRu:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        FunctionName: scrapers-fasGovRu
+        CodeUri: fas_gov_ru/
+        Handler: lambda_function.handler
+        Runtime: python3.9
+        Architectures:
+          - x86_64
+        Description: Collects documents from fas.gov.ru
+        MemorySize: 128
+        Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+        Layers:
+          - !Ref ScrapersCommonCode
+
+    govSpbRu:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        FunctionName: scrapers-govSpbRu
+        CodeUri: gov_spb_ru/
+        Handler: lambda_function.handler
+        Runtime: python3.9
+        Architectures:
+          - x86_64
+        Description: Collects documents from gov.spb.ru
+        MemorySize: 128
+        Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+        Layers:
+          - !Ref ScrapersCommonCode
+
+    governmentNnovRu:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        FunctionName: scrapers-governmentNnovRu
+        CodeUri: government_nnov_ru/
+        Handler: lambda_function.handler
+        Runtime: python3.9
+        Architectures:
+          - x86_64
+        Description: Collects documents from government-nnov.ru
+        MemorySize: 128
+        Role: arn:aws:iam::123456789012:role/AWSLambdaBasicExecutiveRole
+        Layers:
+          - !Ref ScrapersCommonCode
+
+
+
+  # AWS Lambda Layers
+  ScrapersCommonCode:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: common_code
+      Description: Common code for the scrapers functions
+      CompatibleRuntimes:
+        - python3.9
