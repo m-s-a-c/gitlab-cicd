@@ -1,0 +1,109 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
+
+# This is a sample GitLab CI/CD configuration file that should run without any modifications.
+# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
+# it uses echo commands to simulate the pipeline execution.
+#
+# A pipeline is composed of independent jobs that run scripts, grouped into stages.
+# Stages run in sequential order, but jobs within stages run in parallel.
+#
+# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
+image: python:3.9
+
+stages:          # List of stages for jobs, and their order of execution
+  - stage:build-deploy
+  - stage:test
+  - prod:build-deploy
+  - prod:test
+
+stage_build-deploy:
+  stage: stage:build-deploy
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "stage"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  before_script:
+    - apt-get update
+    - apt-get install -y python3-pip
+    - pip3 install awscli --upgrade
+    - pip3 install aws-sam-cli --upgrade
+  script:
+    - sed -i 's|$ES_ENDPOINT|'"$S3_BUCKET_NAME"'|g' serverless.yaml
+    - sed -i 's|$ES_USER|'"$ES_USER"'|g' serverless.yaml
+    - sed -i 's|$ES_PASS|'"$ES_PASS"'|g' serverless.yaml
+    - sed -i 's|$LAW_API_ENDPOINT|'"$LAW_API_ENDPOINT"'|g' serverless.yaml
+    - sed -i 's|$SENTRY_SDK_LINK|'"$SENTRY_SDK_LINK"'|g' serverless.yaml
+    - sed -i 's|$SCRAPERS_API_ENDPOINT|'"$SCRAPERS_API_ENDPOINT"'|g' serverless.yaml
+    - sed -i 's|$LAMBDA_REGION_NAME|'"$LAMBDA_REGION_NAME"'|g' serverless.yaml
+    - sed -i '/FunctionName:/ s/$/-stage/' serverless.yaml
+    - sam build --template-file serverless.yaml
+    - sam package --output-template-file serverless.yaml --s3-bucket $S3_BUCKET_NAME --region $LAMBDA_REGION_NAME
+    - sam deploy --template-file serverless.yaml --stack-name stage --s3-bucket $S3_BUCKET_NAME --capabilities CAPABILITY_IAM --region $LAMBDA_REGION_NAME
+  environment: stage
+
+stage_test:
+  stage: stage:test
+  needs: ["stage_build-deploy"]
+  before_script:
+    - apt-get update
+    - apt-get install -y python3-pip
+    - pip3 install -r tests/requirements.txt
+  script:
+    - | 
+      echo ES_ENDPOINT=$ES_ENDPOINT >> .env
+      echo ES_USER=$ES_USER >> .env
+      echo ES_PASS=$ES_PASS >> .env
+      echo LAW_API_ENDPOINT=$LAW_API_ENDPOINT >> .env
+      echo SENTRY_SDK_LINK=$SENTRY_SDK_LINK >> .env
+      echo LAMBDA_REGION_NAME=$LAMBDA_REGION_NAME >> .env
+    - pytest tests/unit/
+  after_script:
+    - rm .env
+  environment: stage
+
+prod_build-deploy:
+  stage: prod:build-deploy
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+  before_script:
+    - apt-get update
+    - apt-get install -y python3-pip
+    - pip3 install awscli --upgrade
+    - pip3 install aws-sam-cli --upgrade
+  script:
+    - sed -i 's|$ES_ENDPOINT|'"$S3_BUCKET_NAME"'|g' serverless.yaml
+    - sed -i 's|$ES_USER|'"$ES_USER"'|g' serverless.yaml
+    - sed -i 's|$ES_PASS|'"$ES_PASS"'|g' serverless.yaml
+    - sed -i 's|$LAW_API_ENDPOINT|'"$LAW_API_ENDPOINT"'|g' serverless.yaml
+    - sed -i 's|$SENTRY_SDK_LINK|'"$SENTRY_SDK_LINK"'|g' serverless.yaml
+    - sed -i 's|$SCRAPERS_API_ENDPOINT|'"$SCRAPERS_API_ENDPOINT"'|g' serverless.yaml
+    - sed -i 's|$LAMBDA_REGION_NAME|'"$LAMBDA_REGION_NAME"'|g' serverless.yaml
+    - sam build --template-file serverless.yaml
+    - sam package --output-template-file serverless.yaml --s3-bucket $S3_BUCKET_NAME --region $LAMBDA_REGION_NAME
+    - sam deploy --template-file serverles.yaml --stack-name prod --s3-bucket $S3_BUCKET_NAME --capabilities CAPABILITY_IAM --region $LAMBDA_REGION_NAME
+  environment: prod
+
+prod_test:
+  stage: prod:test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+  needs: ["prod_build-deploy"]
+  before_script:
+    - apt-get update
+    - apt-get install -y python3-pip
+    - pip3 install -r tests/requirements.txt
+  script:
+    - | 
+      echo ES_ENDPOINT=$ES_ENDPOINT >> .env
+      echo ES_USER=$ES_USER >> .env
+      echo ES_PASS=$ES_PASS >> .env
+      echo LAW_API_ENDPOINT=$LAW_API_ENDPOINT >> .env
+      echo SENTRY_SDK_LINK=$SENTRY_SDK_LINK >> .env
+      echo LAMBDA_REGION_NAME=$LAMBDA_REGION_NAME >> .env
+    - pytest tests/unit/
+  after_script:
+    - rm .env
+  environment: prod
